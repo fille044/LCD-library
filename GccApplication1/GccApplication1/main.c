@@ -23,38 +23,71 @@
 #define RS_SIGN (PORTB |= (1<<PB1))
 #define RS_INSTR (PORTB &= ~(1<<PB1))
 
+#include <string.h>
 #include <avr/io.h>
 #include <util/delay.h>
 
-int main(void)
-{
+void send_it(void) {
+	ENABLE;
+	_delay_us(500);
+	DISABLE;
+	_delay_us(500);
+}
+
+void print(char *input) {
+	RS_SIGN;	
+	int a = strlen(input); 
+	for (int ix = 0; ix < a; ix++){
+		PORTD = input[ix];
+		send_it();
+	}
+}
+
+void clear(void) {
+	RS_INSTR;
+	//Clear screen
+	PORTD = 0x01;
+	send_it();
+}
+
+void init(void) {
 	DDRD = 0xFF;
 	DDRB = 0xFF;
 	_delay_ms(50);
-	
 	RS_INSTR;
 	DISABLE;
-	
+	_delay_us(500);
+	// Set 2 rows
+	PORTD = 0b00111100;
+	send_it();
+	// Turn on screen
 	PORTD = 0x0C;
-	ENABLE;
-	_delay_ms(5);
-	DISABLE;
-	_delay_ms(5);
+	send_it();
+	//Clear screen
+	clear();
+}
+
+void set_cursor(int a, int b) {
+	RS_INSTR;
+	if (a==1){
+		PORTD = 0x80 + b;
+		send_it();
+	}
+	else if (a==2){
+		PORTD = 0xC0 + b;
+		send_it();
+	}
+}
 	
-	PORTD = 0x01;
-	ENABLE;
-	_delay_ms(5);
-	DISABLE;
-	_delay_ms(5);
-	
-    while (1) 
-    {
-		RS_SIGN;
-		PORTD = 0b00110011; // trea
-		ENABLE;
-		_delay_ms(5);
-		DISABLE;
-		_delay_ms(5);
+int main(void) {
+	init();
+    while (1) {	
+		set_cursor(1,0);
+		print("Hello");
+		set_cursor(2, 8);
+		print("success");
+		_delay_ms(500);
+		clear();
 	}
 }
 
