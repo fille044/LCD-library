@@ -3,7 +3,7 @@
  *
  * Created: 04/04/2017 09:54:20
  * Author : fille
- */ 
+ */
 
 /*	RS PB1
 	E PB2
@@ -27,30 +27,88 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-void send_it(void) {
+
+/* ------------------------------------------------------*/
+/*
+   Sends data in buffer to LCD
+*/
+/* ------------------------------------------------------*/
+void sendItLcd(void) {
 	ENABLE;
 	_delay_us(500);
 	DISABLE;
 	_delay_us(500);
 }
 
-void print(char *input) {
-	RS_SIGN;	
-	int a = strlen(input); 
+
+/* ------------------------------------------------------*/
+/*
+   Sets the cursor to where next sign should be placed
+*/
+/* ------------------------------------------------------*/
+void set_cursorLcd(int a, int b) {
+	RS_INSTR;
+	if (a==1){
+		PORTD = 0x80 + b;
+		send_it();
+	}
+	else if (a==2){
+		PORTD = 0xC0 + b;
+		send_it();
+	}
+}
+
+
+/* ------------------------------------------------------*/
+/*
+   Stores an integer in buffer to send
+*/
+/* ------------------------------------------------------*/
+void printIntLcd(int input) {
+	RS_SIGN
+	char CharBuffer[10];
+	sprintf(CharBuffer, "%d", input);
+	int a = strlen(input);
+	for (int ix = 0; ix < a; ix++){
+		PORTD = CharBuffer[ix];
+		send_it();
+	}
+}
+
+
+/* ------------------------------------------------------*/
+/*
+   Stores an char array in buffer to send
+*/
+/* ------------------------------------------------------*/
+void printCharLcd(char *input) {
+	RS_SIGN;
+	int a = strlen(input);
 	for (int ix = 0; ix < a; ix++){
 		PORTD = input[ix];
 		send_it();
 	}
 }
 
-void clear(void) {
+
+/* ------------------------------------------------------*/
+/*
+   Clears screen
+*/
+/* ------------------------------------------------------*/
+void clearLcd(void) {
 	RS_INSTR;
-	//Clear screen
 	PORTD = 0x01;
 	send_it();
 }
 
-void init(void) {
+
+/* ------------------------------------------------------*/
+/*
+   Initialize LCD with special LCD-commands
+*/
+/* ------------------------------------------------------*/
+void initLcd(void) {
 	DDRD = 0xFF;
 	DDRB = 0xFF;
 	_delay_ms(50);
@@ -67,30 +125,20 @@ void init(void) {
 	clear();
 }
 
-void set_cursor(int a, int b) {
-	RS_INSTR;
-	if (a==1){
-		PORTD = 0x80 + b;
-		send_it();
-	}
-	else if (a==2){
-		PORTD = 0xC0 + b;
-		send_it();
-	}
-}
-	
+
+/* ------------------------------------------------------*/
+/*
+   Main loop
+*/
+/* ------------------------------------------------------*/
 int main(void) {
-	init();
-    while (1) {	
-		set_cursor(1,0);
-		print("Hello");
-		set_cursor(2, 8);
-		print("success");
+	initLcd();
+    while (1) {
+		set_cursorLcd(1,0);
+		printCharLcd("Hello");
+		set_cursorLcd(2, 8);
+		printCharLcd("success");
 		_delay_ms(500);
-		clear();
+		clearLcd();
 	}
 }
-
-
-
-
